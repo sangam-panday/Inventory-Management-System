@@ -24,8 +24,11 @@ void drawUI() {
     rectangle(450, 150, 600, 200); 
     outtextxy(470, 165, "Buy Item");
 
-    rectangle(250, 220, 400, 270); 
-    outtextxy(290, 235, "Exit");
+    rectangle(100, 220, 250, 270); 
+    outtextxy(140, 235, "Exit");
+    
+    rectangle(300, 220, 450, 270);
+    outtextxy(340, 235, "Search");
 
     setcolor(WHITE);
     rectangle(50, 300, 600, 380); 
@@ -85,9 +88,10 @@ void AddItems(){
     outtextxy(100, 300, "Enter Batch No: ");
     getTextInput(250, 300, batchNo, 20);
     
-    outtextxy(100, 350, "Enter Expiry Date (YYYY-MM-DD): ");
+    outtextxy(100, 350, "Enter Expiry Date (Days remaining): ");
     getTextInput(400, 350, expiryDate, 15);
 
+	int expdate = atoi(expiryDate);
     int id = atoi(idStr);
     int quantity = atoi(quantityStr);
     double price = atof(priceStr);
@@ -98,8 +102,8 @@ void AddItems(){
 		delay(2000);
 		return;
 	}
-	int fid, fquantity;
-	char fname[20], fbatchNo[20], fexpiryDate[20];
+	int fid, fquantity, fexpiryDate;
+	char fname[20], fbatchNo[20];
 	double fprice;
 	int total = 0;
 	
@@ -119,7 +123,7 @@ void AddItems(){
 	{
 		ofstream file("inventory.txt", ios::app);
 	    if (file.is_open()) {
-	        file << id << " " << name << " " << quantity << " " << price << " " << batchNo << " " << expiryDate <<endl;
+	        file << id << " " << name << " " << quantity << " " << price << " " << batchNo << " " << expdate <<endl;
 	        file.close();
 	    } else {
 	        outtextxy(100, 400, "Error: Unable to open file!");
@@ -167,11 +171,13 @@ void ViewItems(){
 	outtextxy(540, 50, "Exp date");
 	line(0, 70, 600, 70);
 	int down = 80;
-	int id, quantity;
+	int id, quantity, expdate;
 	double price;
-	char name[20], batchNo[20], expiryDate[15];
-	while(file >> id >> name >> quantity >> price >> batchNo >> expiryDate){
+	char name[20], batchNo[20];
+	while(file >> id >> name >> quantity >> price >> batchNo >> expdate){
 		char idStr[10], quantityStr[10], priceStr[10];
+		char expiryDate[10];
+		sprintf(expiryDate,"%d", expdate);
 		sprintf(idStr,"%d",id);
 		sprintf(quantityStr,"%d",quantity);
 		sprintf(priceStr,"%.2f",price);
@@ -231,10 +237,10 @@ void BuyItems(){
 	
 	int total = 0;
 	int found = 0;
-	int fid, fquantity;
-	char fname[20], fbatchNo[20], fexpiryDate[20];
+	int fid, fquantity, fexpdate;
+	char fname[20], fbatchNo[20];
 	double fprice;
-	while(file >> fid >> fname >> fquantity >> fprice >> fbatchNo >> fexpiryDate){
+	while(file >> fid >> fname >> fquantity >> fprice >> fbatchNo >> fexpdate){
 		total += 1;
         if(fid == id){
         	found += 1;
@@ -251,7 +257,7 @@ void BuyItems(){
 			}
 		}
 		if(fquantity != 0){
-			temp<<fid<<" "<<fname<<" "<<fquantity<<" "<<fprice<<" "<<fbatchNo<<" "<<fexpiryDate<<endl;	
+			temp<<fid<<" "<<fname<<" "<<fquantity<<" "<<fprice<<" "<<fbatchNo<<" "<<fexpdate<<endl;	
 		}
 	}
 	if(found==0){
@@ -284,26 +290,49 @@ int main(){
     while (true) {
     	cleardevice();
     	drawUI();
-        if (ismouseclick(WM_LBUTTONDOWN)) {
-            getmouseclick(WM_LBUTTONDOWN, x, y);
-            
-            if (isInside(x, y, 50, 150, 200, 200)) {
-                AddItems();
-            } 
-            else if (isInside(x, y, 250, 150, 400, 200)) {
-                ViewItems();
-            } 
-            else if (isInside(x, y, 450, 150, 600, 200)) {
-                BuyItems();
-            } 
-            else if (isInside(x, y, 250, 220, 400, 270)) {
-                outtextxy(200, 320, "Exiting...               ");
-                delay(1000);
-                closegraph();
-                exit(0);
-            }
-        }
-        delay(50); 
+	    ////////////////////////////////////////////////
+	    ofstream temp("temp.txt");
+	    ifstream file("inventory.txt");
+	    
+		int fid, fquantity, fexpdate;
+		char fname[20], fbatchNo[20];
+		double fprice;
+		while(file >> fid >> fname >> fquantity >> fprice >> fbatchNo >> fexpdate){
+			if(fexpdate != 0){
+				fexpdate -= 1;
+				temp<<fid<<" "<<fname<<" "<<fquantity<<" "<<fprice<<" "<<fbatchNo<<" "<<fexpdate<<endl;
+				if (ismouseclick(WM_LBUTTONDOWN)) {
+	            	getmouseclick(WM_LBUTTONDOWN, x, y);
+	            
+		            if (isInside(x, y, 50, 150, 200, 200)) {
+		                AddItems();
+		            } 
+		            else if (isInside(x, y, 250, 150, 400, 200)) {
+		                ViewItems();
+		            } 
+		            else if (isInside(x, y, 450, 150, 600, 200)) {
+		                BuyItems();
+		            } 
+		            else if (isInside(x, y, 100, 220, 250, 270)) {
+		                outtextxy(200, 320, "Exiting...               ");
+		                delay(1000);
+		                closegraph();
+		                exit(0);
+		            }
+	        	}	
+			}
+			else{
+				char message[30];
+				sprintf(message,"Item %d expired,fname");
+				outtextxy(270, 300, message);
+			}
+			delay(1000);
+		}
+		file.close();
+		temp.close();
+		remove("inventory.txt");
+	    rename("temp.txt", "inventory.txt");
+    	///////////////////////////////////////////////////////////////
     }
     getch();
     closegraph();
