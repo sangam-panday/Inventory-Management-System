@@ -2,6 +2,7 @@
 #include <fstream>
 #include <graphics.h>
 #include <conio.h>
+#include <string.h>
 using namespace std;
 
 void drawUI() {
@@ -236,14 +237,14 @@ void BuyItems(){
     }
 	
 	int total = 0;
-	int found = 0;
+	bool found = false;
 	int fid, fquantity, fexpdate;
 	char fname[20], fbatchNo[20];
 	double fprice;
 	while(file >> fid >> fname >> fquantity >> fprice >> fbatchNo >> fexpdate){
 		total += 1;
         if(fid == id){
-        	found += 1;
+        	found = true;
 			if(fquantity >= quantity){
 				int bill = quantity * fprice;
 				char billStr[20];
@@ -260,9 +261,10 @@ void BuyItems(){
 			temp<<fid<<" "<<fname<<" "<<fquantity<<" "<<fprice<<" "<<fbatchNo<<" "<<fexpdate<<endl;	
 		}
 	}
-	if(found==0){
+	if(!found){
 		outtextxy(270, 300, "Item with this id not found.. ");
 	}
+	
 	file.close();
 	temp.close();
 	remove("inventory.txt");
@@ -282,6 +284,76 @@ void BuyItems(){
         }
         delay(50);  
     }
+}
+void SearchItems(){
+	cleardevice();
+	int down = 80;
+	char item[20];
+	outtextxy(200, 200, "Enter the name of the item: ");
+	getTextInput(450, 200, item, 20);
+
+	ifstream file("inventory.txt");
+	if(!file){
+		cout<<"Error to open the file.";
+		delay(2000);
+		return;
+	}
+	int id, quantity, expdate;
+	char name[20], batchNo[20];
+	double price;
+	
+	bool found = false;
+	
+	while(file >> id >> name >> quantity >> price >> batchNo >> expdate){
+		if(strcmp(name, item) == 0)
+		{
+			settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
+			setcolor(WHITE);
+			outtextxy(50, 50, "ID");
+			outtextxy(100, 50, "Name");
+			outtextxy(225, 50, "Quantity");
+			outtextxy(320, 50, "Price");
+			outtextxy(440, 50, "BatchNO");
+			outtextxy(540, 50, "Exp date");
+			line(0, 70, 600, 70);
+			
+			int id, quantity, expdate;
+			double price;
+			char name[20], batchNo[20];
+			char idStr[10], quantityStr[10], priceStr[10];
+			char expiryDate[10];
+			sprintf(expiryDate,"%d", expdate);
+			sprintf(idStr,"%d",id);
+			sprintf(quantityStr,"%d",quantity);
+			sprintf(priceStr,"%.2f",price);
+			
+			outtextxy(50, down, idStr);
+	        outtextxy(100, down, name);
+	        outtextxy(225, down, quantityStr);
+	        outtextxy(320, down, priceStr);
+	        outtextxy(440, down, batchNo);
+	        outtextxy(540, down, expiryDate);
+	        down += 20;	
+	        found = true;
+		}
+	}
+	if(!found){
+		outtextxy(200, 300, "Item with this name not found");	
+	}
+	rectangle(260, 390, 360, 430);
+    outtextxy(280, 400, "Exit");
+    int x, y;
+    while (true) {
+        if (ismouseclick(WM_LBUTTONDOWN)) {
+            getmouseclick(WM_LBUTTONDOWN, x, y);
+            if (isInside(x, y, 260, 390, 360, 430)) {
+                outtextxy(200, 450, "Exiting...               ");
+                delay(1000);
+                return;
+            }
+        } 
+		delay(50); 
+	}
 }
 int main(){
 	int gd = DETECT, gm;
@@ -313,6 +385,9 @@ int main(){
 		            else if (isInside(x, y, 450, 150, 600, 200)) {
 		                BuyItems();
 		            } 
+		            else  if(isInside(x, y, 300, 220, 450, 270)){
+		            	SearchItems();
+					}
 		            else if (isInside(x, y, 100, 220, 250, 270)) {
 		                outtextxy(200, 320, "Exiting...               ");
 		                delay(1000);
