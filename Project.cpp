@@ -164,6 +164,7 @@ void ViewItems(){
 	}
 	settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
 	setcolor(WHITE);
+	
 	outtextxy(50, 50, "ID");
 	outtextxy(100, 50, "Name");
 	outtextxy(225, 50, "Quantity");
@@ -171,17 +172,20 @@ void ViewItems(){
 	outtextxy(440, 50, "BatchNO");
 	outtextxy(540, 50, "Exp date");
 	line(0, 70, 600, 70);
+	
 	int down = 80;
 	int id, quantity, expdate;
 	double price;
 	char name[20], batchNo[20];
 	while(file >> id >> name >> quantity >> price >> batchNo >> expdate){
+		
 		char idStr[10], quantityStr[10], priceStr[10];
 		char expiryDate[10];
 		sprintf(expiryDate,"%d", expdate);
 		sprintf(idStr,"%d",id);
 		sprintf(quantityStr,"%d",quantity);
 		sprintf(priceStr,"%.2f",price);
+		
 		outtextxy(50, down, idStr);
         outtextxy(100, down, name);
         outtextxy(225, down, quantityStr);
@@ -285,76 +289,80 @@ void BuyItems(){
         delay(50);  
     }
 }
-void SearchItems(){
-	cleardevice();
-	int down = 80;
-	char item[20];
-	outtextxy(200, 200, "Enter the name of the item: ");
-	getTextInput(450, 200, item, 20);
+void SearchItems() {
+    cleardevice();
+    int down = 140;
+    char item[20];
 
-	ifstream file("inventory.txt");
-	if(!file){
-		cout<<"Error to open the file.";
-		delay(2000);
-		return;
-	}
-	int id, quantity, expdate;
-	char name[20], batchNo[20];
-	double price;
-	
-	bool found = false;
-	
-	while(file >> id >> name >> quantity >> price >> batchNo >> expdate){
-		if(strcmp(name, item) == 0)
-		{
-			settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
-			setcolor(WHITE);
-			outtextxy(50, 50, "ID");
-			outtextxy(100, 50, "Name");
-			outtextxy(225, 50, "Quantity");
-			outtextxy(320, 50, "Price");
-			outtextxy(440, 50, "BatchNO");
-			outtextxy(540, 50, "Exp date");
-			line(0, 70, 600, 70);
-			
-			int id, quantity, expdate;
-			double price;
-			char name[20], batchNo[20];
-			char idStr[10], quantityStr[10], priceStr[10];
-			char expiryDate[10];
-			sprintf(expiryDate,"%d", expdate);
-			sprintf(idStr,"%d",id);
-			sprintf(quantityStr,"%d",quantity);
-			sprintf(priceStr,"%.2f",price);
-			
-			outtextxy(50, down, idStr);
-	        outtextxy(100, down, name);
-	        outtextxy(225, down, quantityStr);
-	        outtextxy(320, down, priceStr);
-	        outtextxy(440, down, batchNo);
-	        outtextxy(540, down, expiryDate);
-	        down += 20;	
-	        found = true;
-		}
-	}
-	if(!found){
-		outtextxy(200, 300, "Item with this name not found");	
-	}
-	rectangle(260, 390, 360, 430);
+    outtextxy(50, 50, "Enter the name of the item: ");
+    getTextInput(280, 50, item, 20);
+
+    ifstream file("inventory.txt");
+    if (!file) {
+        outtextxy(200, 250, "Error opening the file!");
+        delay(2000);
+        return;
+    }
+
+    int id, quantity, expdate;
+    char name[20], batchNo[20];
+    double price;
+    
+    bool found = false;
+
+    settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
+    setcolor(WHITE);
+    outtextxy(50, 100, "ID");
+    outtextxy(100, 100, "Name");
+    outtextxy(225, 100, "Quantity");
+    outtextxy(320, 100, "Price");
+    outtextxy(440, 100, "BatchNO");
+    outtextxy(540, 100, "Exp date");
+    line(0, 125, 600, 125);
+
+    while (file >> id >> name >> quantity >> price >> batchNo >> expdate) {
+        if (strcasecmp(name, item) == 0) { // Case-insensitive comparison
+            char idStr[10], quantityStr[10], priceStr[10], expiryDate[10];
+            sprintf(idStr, "%d", id);
+            sprintf(quantityStr, "%d", quantity);
+            sprintf(priceStr, "%.2f", price);
+            sprintf(expiryDate, "%d", expdate);
+
+            outtextxy(50, down, idStr);
+            outtextxy(100, down, name);
+            outtextxy(225, down, quantityStr);
+            outtextxy(320, down, priceStr);
+            outtextxy(440, down, batchNo);
+            outtextxy(540, down, expiryDate);
+            down += 20;
+            found = true;
+        }
+    }
+    
+    if (!found) {
+        outtextxy(200, 300, "Item with this name not found");
+    }
+    
+    file.close();
+
+    // Exit Button
+    rectangle(260, 390, 360, 430);
     outtextxy(280, 400, "Exit");
+
     int x, y;
     while (true) {
         if (ismouseclick(WM_LBUTTONDOWN)) {
             getmouseclick(WM_LBUTTONDOWN, x, y);
             if (isInside(x, y, 260, 390, 360, 430)) {
-                outtextxy(200, 450, "Exiting...               ");
+                outtextxy(200, 450, "Exiting...");
                 delay(1000);
                 return;
             }
-        } 
-		delay(50); 
-	}
+        }
+        delay(50);
+    }
 }
+
 int main(){
 	int gd = DETECT, gm;
     initgraph(&gd, &gm, "C:\\TURBOC3\\BGI"); 
@@ -398,8 +406,9 @@ int main(){
 			}
 			else{
 				char message[30];
-				sprintf(message,"Item %d expired,fname");
-				outtextxy(270, 300, message);
+				sprintf(message,"Item %s expired",fname);
+				outtextxy(200, 320, message);
+				delay(2000);
 			}
 			delay(1000);
 		}
