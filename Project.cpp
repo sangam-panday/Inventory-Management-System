@@ -113,14 +113,13 @@ void AddItems(){
         if(fid == id){
         	outtextxy(200, 400,"Items with this id already exists");
         	outtextxy(200, 450, "Exiting...               ");
-        	delay(1000);
         	filef.close();
         	return;
 		}
 	}	
 	filef.close();
 	
-	if(total<= 14)
+	if(total<= 50)
 	{
 		ofstream file("inventory.txt", ios::app);
 	    if (file.is_open()) {
@@ -135,7 +134,6 @@ void AddItems(){
 	else{
 		outtextxy(200, 400,"Inventory Full");
     	outtextxy(200, 450, "Exiting...               ");
-    	delay(1000);
     	return;
 	}
     
@@ -147,7 +145,6 @@ void AddItems(){
             getmouseclick(WM_LBUTTONDOWN, x, y);
             if (isInside(x, y, 260, 390, 360, 430)) {
                 outtextxy(200, 450, "Exiting...               ");
-                delay(1000);
                 return;
             }
         }
@@ -202,7 +199,6 @@ void ViewItems(){
             getmouseclick(WM_LBUTTONDOWN, x, y);
             if (isInside(x, y, 260, 390, 360, 430)) {
                 outtextxy(200, 450, "Exiting...               ");
-                delay(1000);
                 return;
             }
         }
@@ -221,9 +217,6 @@ void BuyItems(){
 	char idStr[10], quantityStr[10];
 	
 	settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
-	setcolor(CYAN);
-	rectangle(290, 40, 380, 80);
-	outtextxy(305, 50 , "Delete ");
 	setcolor(WHITE);
 	outtextxy(50, 100, "Enter ID: ");
 	getTextInput(120 , 100 ,idStr , 10);
@@ -255,7 +248,7 @@ void BuyItems(){
 				sprintf(billStr, "The price is %d", bill);
 				outtextxy(270, 300, billStr);
 				fquantity -= quantity;
-				outtextxy(270, 350, "Deleted..");
+				outtextxy(270, 350, "Bought..");
 			}
 			else{
 				outtextxy(270, 300,"Not enough quantity");
@@ -282,7 +275,6 @@ void BuyItems(){
             getmouseclick(WM_LBUTTONDOWN, x, y);
             if (isInside(x, y, 260, 390, 360, 430)) {
                 outtextxy(200, 450, "Exiting...               ");
-                delay(1000);
                 return;
             }
         }
@@ -355,7 +347,6 @@ void SearchItems() {
             getmouseclick(WM_LBUTTONDOWN, x, y);
             if (isInside(x, y, 260, 390, 360, 430)) {
                 outtextxy(200, 450, "Exiting...");
-                delay(1000);
                 return;
             }
         }
@@ -398,7 +389,6 @@ int main(){
 					}
 		            else if (isInside(x, y, 100, 220, 250, 270)) {
 		                outtextxy(200, 320, "Exiting...               ");
-		                delay(1000);
 		                closegraph();
 		                exit(0);
 		            }
