@@ -1,0 +1,6 @@
+Item Name: Iphone
+Quantity: 23
+Unit Price: 150000
+Total Price: 3.45e+006
+Purchase Date: Sun Apr 27 08:31:18 2025
+----------------------------------------
