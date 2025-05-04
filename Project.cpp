@@ -3,7 +3,23 @@
 #include <graphics.h>
 #include <conio.h>
 #include <string.h>
-#include <time.h>
+#include <ctime>
+
+int getCurrentDate() {
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return (1900 + ltm->tm_year) * 10000 + (1 + ltm->tm_mon) * 100 + ltm->tm_mday;
+}
+
+int getDaysLeft(int expiryDate) {
+    tm exp_tm = {};
+    exp_tm.tm_year = (expiryDate / 10000) - 1900;
+    exp_tm.tm_mon = (expiryDate / 100 % 100) - 1;
+    exp_tm.tm_mday = expiryDate % 100;
+    time_t exp_time = mktime(&exp_tm);
+    return (int)((exp_time - time(0)) / (60 * 60 * 24));
+}
+
 using namespace std;
 
 void drawUI() {
@@ -93,10 +109,14 @@ void AddItems(){
     outtextxy(100, 300, "Enter Batch No: ");
     getTextInput(250, 300, batchNo, 20);
     
-    outtextxy(100, 350, "Enter Expiry Date (Days remaining): ");
-    getTextInput(400, 350, expiryDate, 15);
-
-	int expdate = atoi(expiryDate);
+   	char expiryInput[15];
+	outtextxy(100, 350, "Enter Expiry Date (DD-MM-YYYY): ");
+	getTextInput(400, 350, expiryInput, 15);
+	
+	int day, month, year;
+	sscanf(expiryInput, "%d-%d-%d", &day, &month, &year);
+	int expdate = year * 10000 + month * 100 + day;
+	
     int id = atoi(idStr);
     int quantity = atoi(quantityStr);
     double price = atof(priceStr);
@@ -118,6 +138,7 @@ void AddItems(){
         	outtextxy(200, 400,"Items with this id already exists");
         	outtextxy(200, 450, "Exiting...               ");
         	filef.close();
+        	delay(200);
         	return;
 		}
 	}	
@@ -202,20 +223,38 @@ void ViewItems() {
         int startIdx = currentPage * itemsPerPage;
         int endIdx = (startIdx + itemsPerPage < totalItems) ? (startIdx + itemsPerPage) : totalItems;
         int down = 80;
-
+		
+		int today = getCurrentDate();
+		
         for (int i = startIdx; i < endIdx; ++i) {
             char idStr[10], quantityStr[10], priceStr[10], expiryDate[10];
             sprintf(idStr, "%d", items[i].id);
             sprintf(quantityStr, "%d", items[i].quantity);
             sprintf(priceStr, "%.2f", items[i].price);
-            sprintf(expiryDate, "%d", items[i].expdate);
+            
+            int expDate = items[i].expdate;
+		    int day = expDate % 100;
+		    int month = (expDate / 100) % 100;
+		    int year = expDate / 10000;
+		    char formattedExp[15];
+		    sprintf(formattedExp, "%02d-%02d-%04d", day, month, year);
+		    
+			if (expDate < today) {
+		        setcolor(RED);
+		        outtextxy(600, down, "Expired");
+		    } else if (getDaysLeft(expDate) <= 30) {
+		        setcolor(YELLOW);
+		        outtextxy(600, down, "Near Exp.");
+		    } else {
+		        setcolor(WHITE);
+		    }
 
             outtextxy(50, down, idStr);
             outtextxy(100, down, items[i].name);
             outtextxy(225, down, quantityStr);
             outtextxy(320, down, priceStr);
             outtextxy(440, down, items[i].batchNo);
-            outtextxy(540, down, expiryDate);
+            outtextxy(540, down, formattedExp);
 
             down += 20;
         }
@@ -284,9 +323,18 @@ void SavePurchaseHistory(const char* itemName, int quantity, double unitPrice, d
 
     historyFile.close();
 }
-
 void BuyItems() {
     cleardevice();
+
+    struct Item {
+        int id, quantity, expdate;
+        double price;
+        char name[20], batchNo[20];
+    };
+
+    Item items[100];
+    int totalItems = 0;
+
     ifstream file("inventory.txt");
     if (!file) {
         cout << "Error opening the file.";
@@ -294,17 +342,113 @@ void BuyItems() {
         return;
     }
 
-    char idStr[10], quantityStr[10];
+    while (file >> items[totalItems].id >> items[totalItems].name 
+                >> items[totalItems].quantity >> items[totalItems].price 
+                >> items[totalItems].batchNo >> items[totalItems].expdate) {
+        totalItems++;
+    }
+    file.close();
 
+    int itemsPerPage = 10;
+    int currentPage = 0;
+    int totalPages = (totalItems + itemsPerPage - 1) / itemsPerPage;
+    bool exitFlag = false;
+
+    while (!exitFlag) {
+        cleardevice();
+        settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
+        setcolor(WHITE);
+
+        outtextxy(50, 50, "ID");
+        outtextxy(100, 50, "Name");
+        outtextxy(225, 50, "Quantity");
+        outtextxy(320, 50, "Price");
+        outtextxy(440, 50, "BatchNO");
+        outtextxy(540, 50, "Exp date");
+        line(0, 70, 600, 70);
+
+        int startIdx = currentPage * itemsPerPage;
+        int endIdx = (startIdx + itemsPerPage < totalItems) ? (startIdx + itemsPerPage) : totalItems;
+        int down = 80;
+
+        for (int i = startIdx; i < endIdx; ++i) {
+            char idStr[10], quantityStr[10], priceStr[10], expiryDate[10];
+            sprintf(idStr, "%d", items[i].id);
+            sprintf(quantityStr, "%d", items[i].quantity);
+            sprintf(priceStr, "%.2f", items[i].price);
+            sprintf(expiryDate, "%d", items[i].expdate);
+
+            outtextxy(50, down, idStr);
+            outtextxy(100, down, items[i].name);
+            outtextxy(225, down, quantityStr);
+            outtextxy(320, down, priceStr);
+            outtextxy(440, down, items[i].batchNo);
+            outtextxy(540, down, expiryDate);
+
+            down += 20;
+        }
+
+        if (currentPage > 0) {
+            rectangle(100, 390, 200, 430);
+            outtextxy(120, 400, "Previous");
+        }
+        if (currentPage < totalPages - 1) {
+            rectangle(220, 390, 320, 430);
+            outtextxy(250, 400, "Next");
+        }
+        rectangle(350, 390, 450, 430);
+        outtextxy(385, 400, "Buy");
+		
+		rectangle(10, 390, 80, 430);
+		outtextxy(30, 400, "Exit");
+		
+		
+        char pageInfo[50];
+        sprintf(pageInfo, "Page %d of %d", currentPage + 1, totalPages);
+        outtextxy(500, 400, pageInfo);
+
+        int x = -1, y = -1;
+        while (true) {
+            if (ismouseclick(WM_LBUTTONDOWN)) {
+                getmouseclick(WM_LBUTTONDOWN, x, y);
+
+                if (currentPage > 0 && isInside(x, y, 100, 390, 200, 430)) {
+                    currentPage--;
+                    break;
+                }
+                if (currentPage < totalPages - 1 && isInside(x, y, 220, 390, 320, 430)) {
+                    currentPage++;
+                    break;
+                }
+                if (isInside(x, y, 350, 390, 450, 430)) {
+                    exitFlag = true;
+                    break;
+                }
+                if(isInside(x, y, 10, 390, 80, 430)){
+                	return;
+				}
+            }
+            delay(50);
+        }
+    }
+
+    char idStr[10], quantityStr[10];
     settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
     setcolor(WHITE);
-    outtextxy(50, 100, "Enter ID: ");
-    getTextInput(120, 100, idStr, 10);
-    outtextxy(50, 150, "Enter Quantity: ");
-    getTextInput(200, 150, quantityStr, 10);
+    outtextxy(50, 300, "Enter ID: ");
+    getTextInput(120, 300, idStr, 10);
+    outtextxy(50, 320, "Enter Quantity: ");
+    getTextInput(200, 320, quantityStr, 10);
 
     int id = atoi(idStr);
     int quantity = atoi(quantityStr);
+
+    ifstream readFile("inventory.txt");
+    if (!readFile) {
+        cout << "Error reopening the file.";
+        delay(2000);
+        return;
+    }
 
     ofstream temp("temp.txt");
     if (!temp) {
@@ -313,8 +457,7 @@ void BuyItems() {
         return;
     }
 
-    bool found = false;
-    bool bought = false;
+    bool found = false, bought = false;
     int fid, fquantity, fexpdate;
     char fname[20], fbatchNo[20];
     double fprice;
@@ -323,7 +466,7 @@ void BuyItems() {
     int boughtQty = 0;
     double unitPrice = 0.0, totalPrice = 0.0;
 
-    while (file >> fid >> fname >> fquantity >> fprice >> fbatchNo >> fexpdate) {
+    while (readFile >> fid >> fname >> fquantity >> fprice >> fbatchNo >> fexpdate) {
         if (fid == id) {
             found = true;
             if (fquantity >= quantity) {
@@ -333,7 +476,7 @@ void BuyItems() {
                 totalPrice = boughtQty * unitPrice;
                 strcpy(billItem, fname);
 
-                fquantity -= quantity; // Update quantity after buying
+                fquantity -= quantity;
             } else {
                 outtextxy(270, 300, "Not enough quantity available.");
             }
@@ -342,7 +485,8 @@ void BuyItems() {
             temp << fid << " " << fname << " " << fquantity << " " << fprice << " " << fbatchNo << " " << fexpdate << endl;
         }
     }
-    file.close();
+
+    readFile.close();
     temp.close();
     remove("inventory.txt");
     rename("temp.txt", "inventory.txt");
@@ -350,7 +494,6 @@ void BuyItems() {
     if (!found) {
         outtextxy(270, 300, "Item with this ID not found.");
     } else if (bought) {
-        // Print the bill
         cleardevice();
         settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
         setcolor(WHITE);
@@ -359,27 +502,21 @@ void BuyItems() {
         line(150, 80, 450, 80);
 
         char text[50];
-
         sprintf(text, "Item Name: %s", billItem);
         outtextxy(100, 120, text);
-
         sprintf(text, "Quantity: %d", boughtQty);
         outtextxy(100, 170, text);
-
         sprintf(text, "Unit Price: %.2f", unitPrice);
         outtextxy(100, 220, text);
-
         sprintf(text, "Total Price: %.2f", totalPrice);
         outtextxy(100, 270, text);
 
         line(150, 310, 450, 310);
         outtextxy(200, 330, "Thank you for your purchase!");
 
-        // Save purchase history
         SavePurchaseHistory(billItem, boughtQty, unitPrice, totalPrice);
     }
 
-    // Exit Button
     rectangle(260, 390, 360, 430);
     outtextxy(280, 400, "Exit");
     int x, y;

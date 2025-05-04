@@ -4,3 +4,39 @@ Unit Price: 150000
 Total Price: 3.45e+006
 Purchase Date: Sun Apr 27 08:31:18 2025
 ----------------------------------------
+Item Name: Iphone
+Quantity: 23
+Unit Price: 150000
+Total Price: 3.45e+006
+Purchase Date: Sun May 04 08:33:45 2025
+----------------------------------------
+Item Name: Iphone
+Quantity: 1
+Unit Price: 10000
+Total Price: 10000
+Purchase Date: Sun May 04 08:52:33 2025
+----------------------------------------
+Item Name: Iphone
+Quantity: 2
+Unit Price: 10000
+Total Price: 20000
+Purchase Date: Sun May 04 08:52:50 2025
+----------------------------------------
+Item Name: Iphone
+Quantity: 3
+Unit Price: 10000
+Total Price: 30000
+Purchase Date: Sun May 04 08:57:31 2025
+----------------------------------------
+Item Name: Iphone
+Quantity: 2
+Unit Price: 10000
+Total Price: 20000
+Purchase Date: Sun May 04 08:59:01 2025
+----------------------------------------
+Item Name: Iphone
+Quantity: 3
+Unit Price: 10000
+Total Price: 30000
+Purchase Date: Sun May 04 08:59:44 2025
+----------------------------------------
