@@ -301,7 +301,6 @@ void ViewItems() {
     }
 }
 void SavePurchaseHistory(const char* itemName, int quantity, double unitPrice, double totalPrice) {
-    // Open the purchase history file in append mode
     ofstream historyFile("purchase_history.txt", ios::app);
     if (!historyFile) {
         cout << "Error opening the purchase history file.";
@@ -309,18 +308,9 @@ void SavePurchaseHistory(const char* itemName, int quantity, double unitPrice, d
         return;
     }
 
-    // Get the current time to record the purchase date
     time_t now = time(0);
     char* dt = ctime(&now);
-
-    // Write purchase details to the file
-    historyFile << "Item Name: " << itemName << endl;
-    historyFile << "Quantity: " << quantity << endl;
-    historyFile << "Unit Price: " << unitPrice << endl;
-    historyFile << "Total Price: " << totalPrice << endl;
-    historyFile << "Purchase Date: " << dt;
-    historyFile << "----------------------------------------" << endl;
-
+	historyFile<<itemName<<" "<<quantity<<" "<<unitPrice<<" "<<totalPrice<<" "<<dt<<endl;
     historyFile.close();
 }
 void BuyItems() {
@@ -475,7 +465,6 @@ void BuyItems() {
                 unitPrice = fprice;
                 totalPrice = boughtQty * unitPrice;
                 strcpy(billItem, fname);
-
                 fquantity -= quantity;
             } else {
                 outtextxy(270, 300, "Not enough quantity available.");
@@ -644,107 +633,112 @@ void SearchItems() {
 }
 void ViewPurchaseHistory() {
     cleardevice();
-    settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
-    setcolor(WHITE);
-
     ifstream file("purchase_history.txt");
     if (!file) {
-        outtextxy(250, 300, "No Purchase History Found!");
+        cout << "Error opening the file.";
         delay(2000);
         return;
     }
 
-    struct HistoryItem {
-        int id;
+    struct Item {
+        int quantity, expdate;
+        double unit_price, total_price;
         char name[20];
-        int quantity;
-        double price;
-        char batchNo[20];
-        int expDate;
-    } items[100];
-    int count = 0;
+    };
 
-    int id, quantity, expDate;
-    char name[20], batchNo[20];
-    double price;
+    Item items[100]; // assume max 100 items
+    int totalItems = 0;
 
-    while (file >> id >> name >> quantity >> price >> batchNo >> expDate) {
-        items[count].id = id;
-        strcpy(items[count].name, name);
-        items[count].quantity = quantity;
-        items[count].price = price;
-        strcpy(items[count].batchNo, batchNo);
-        items[count].expDate = expDate;
-        count++;
+    while (file >> items[totalItems].name 
+                >> items[totalItems].quantity >> items[totalItems].unit_price 
+                >> items[totalItems].total_price >> items[totalItems].expdate) {
+        totalItems++;
     }
     file.close();
-
-    if (count == 0) {
-        outtextxy(270, 300, "No purchases yet.");
-        delay(2000);
-        return;
-    }
-
-    int currentIndex = 0;
-
-    while (true) {
+    
+    int itemsPerPage = 14;
+    int currentPage = 0;
+    int totalPages = (totalItems + itemsPerPage - 1) / itemsPerPage;
+    
+    bool exitFlag = false;
+    while (!exitFlag) {
         cleardevice();
         settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2);
         setcolor(WHITE);
 
-        char text[100];
+        outtextxy(50, 50, "Name");
+        outtextxy(120, 50, "Quantity");
+        outtextxy(225, 50, "Unit Price");
+        outtextxy(320, 50, "Total Price");
+        outtextxy(440, 50, "Exp date");
+        line(0, 70, 600, 70);
 
-        sprintf(text, "ID: %d", items[currentIndex].id);
-        outtextxy(100, 100, text);
+        int startIdx = currentPage * itemsPerPage;
+        int endIdx = (startIdx + itemsPerPage < totalItems) ? (startIdx + itemsPerPage) : totalItems;
+        int down = 80;
+		
+        for (int i = startIdx; i < endIdx; ++i) {
+            char quantityStr[10], unit_priceStr[10], expiryDate[10], total_priceStr[10];
+            sprintf(unit_priceStr, "%.2f", items[i].unit_price);
+            sprintf(quantityStr, "%d", items[i].quantity);
+            sprintf(total_priceStr, "%.2f", items[i].total_price);
+            
+            int expDate = items[i].expdate;
+		    int day = expDate % 100;
+		    int month = (expDate / 100) % 100;
+		    int year = expDate / 10000;
+		    char formattedExp[15];
+		    sprintf(formattedExp, "%02d-%02d-%04d", day, month, year);
 
-        sprintf(text, "Name: %s", items[currentIndex].name);
-        outtextxy(100, 150, text);
+            outtextxy(50, down, items[i].name);
+            outtextxy(120, down, quantityStr);
+            outtextxy(225, down, unit_priceStr);
+            outtextxy(320, down, total_priceStr);
+            outtextxy(440, down, formattedExp);
 
-        sprintf(text, "Quantity Bought: %d", items[currentIndex].quantity);
-        outtextxy(100, 200, text);
+            down += 20;
+        }
+        if (currentPage > 0) {
+            rectangle(100, 390, 200, 430); // Previous
+            outtextxy(120, 400, "Previous");
+        }
+        if (currentPage < totalPages - 1) {
+            rectangle(220, 390, 320, 430); // Next
+            outtextxy(250, 400, "Next");
+        }
+        rectangle(350, 390, 450, 430); // Exit
+        outtextxy(380, 400, "Exit");
 
-        sprintf(text, "Price per Unit: %.2f", items[currentIndex].price);
-        outtextxy(100, 250, text);
-
-        sprintf(text, "Batch No: %s", items[currentIndex].batchNo);
-        outtextxy(100, 300, text);
-
-        sprintf(text, "Expiry Date: %d", items[currentIndex].expDate);
-        outtextxy(100, 350, text);
-
-        // Draw Buttons
-        rectangle(150, 400, 250, 440); // Previous
-        outtextxy(170, 410, "Previous");
-
-        rectangle(300, 400, 400, 440); // Next
-        outtextxy(330, 410, "Next");
-
-        rectangle(450, 400, 550, 440); // Exit
-        outtextxy(480, 410, "Exit");
-
-        int x, y;
+        // Page info
+        char pageInfo[50];
+        sprintf(pageInfo, "Page %d of %d", currentPage + 1, totalPages);
+        outtextxy(500, 400, pageInfo);
+        
+        int x=-1, y=-1;
         while (true) {
             if (ismouseclick(WM_LBUTTONDOWN)) {
                 getmouseclick(WM_LBUTTONDOWN, x, y);
 
-                if (isInside(x, y, 150, 400, 250, 440)) { // Previous
-                    if (currentIndex > 0)
-                        currentIndex--;
+                // Now check where the click happened
+                if (currentPage > 0 && isInside(x, y, 100, 390, 200, 430)) {
+                    currentPage--;
                     break;
-                } else if (isInside(x, y, 300, 400, 400, 440)) { // Next
-                    if (currentIndex < count - 1)
-                        currentIndex++;
+                }
+                if (currentPage < totalPages - 1 && isInside(x, y, 220, 390, 320, 430)) {
+                    currentPage++;
                     break;
-                } else if (isInside(x, y, 450, 400, 550, 440)) { // Exit
-                    return;
+                }
+                if (isInside(x, y, 350, 390, 450, 430)) {
+                    exitFlag = true;
+                    break;
                 }
             }
-            delay(50);
+            delay(50); // to reduce CPU usage
         }
     }
 }
 
-int main() {
+int main(){
     // Setup
     int gd = DETECT, gm;
     initgraph(&gd, &gm, "C:\\TURBOC3\\BGI"); 
